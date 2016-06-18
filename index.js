@@ -11,11 +11,9 @@ var bodyParser      = require("body-parser");
 var log4js          = require('log4js');
 var os              = require('os');  
 var ping            = require('ping');
-var moment          = require('moment')
-var iconv = require("iconv-lite");
-
-
-var tools =  require('./public.js');
+var moment          = require('moment');
+var iconv           = require("iconv-lite");
+var tools           = require('./public.js');
 
 //监听端口
 var port = 80;
@@ -23,28 +21,28 @@ var port = 80;
 var local_addr = '127.0.0.1';
 
 
-//远程服务器端口
-var remote_port = 8080;
-//远程服务器地址
-var remote_server = "192.168.1.106";
+////远程服务器端口
+//var remote_port = 8080;
+////远程服务器地址
+//var remote_server = "192.168.1.106";
+//
+//var remote_url = "http://"+remote_server+":"+remote_port
+//
+//
+////sql server 数据库连接串
+//var conn_str = "Driver={SQL Server Native Client 10.0};Server={192.168.1.105};Database={KeerHis};uid=sa;PWD=sa;";
 
-var remote_url = "http://"+remote_server+":"+remote_port
-
-
-//sql server 数据库连接串
-var conn_str = "Driver={SQL Server Native Client 10.0};Server={192.168.1.105};Database={KeerHis};uid=sa;PWD=sa;";
-
-var interfaces = os.networkInterfaces();
-
-for(var key  in interfaces){
-    var inter = interfaces[key];
-    for(var i =0; i<inter.length;i++){
-        if(inter[i].family =='IPv4' && inter[i].internal==false){  
-            local_addr=inter[i].address; 
-            
-        }  
-    }
-}  
+//var interfaces = os.networkInterfaces();
+//
+//for(var key  in interfaces){
+//    var inter = interfaces[key];
+//    for(var i =0; i<inter.length;i++){
+//        if(inter[i].family =='IPv4' && inter[i].internal==false){
+//            local_addr=inter[i].address;
+//
+//        }
+//    }
+//}
 
 
 // ping.promise.probe(remote_server)
