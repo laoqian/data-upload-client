@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Created by yu on 2016/6/7.
  */
 
@@ -11,39 +11,47 @@ var bodyParser      = require("body-parser");
 var log4js          = require('log4js');
 var os              = require('os');  
 var ping            = require('ping');
-var moment          = require('moment');
-var iconv           = require("iconv-lite");
-var tools           = require('./public.js');
+var moment          = require('moment')
+var iconv = require("iconv-lite");
+
+
+var tools =  require('./public.js');
 
 //监听端口
 var port = 80;
 //本地服务器地址
-var local_addr = '127.0.0.1';
+var local_addr = '192.168.0.106';
 
 
-////远程服务器端口
-//var remote_port = 8080;
-////远程服务器地址
-//var remote_server = "192.168.1.106";
-//
+var conn_str = "Driver={SQL Server Native Client 10.0};Server={192.168.0.107};Database={KeerHis};uid=sa;PWD=sa;";
+
+
+/*
+//远程服务器端口
+var remote_port = 8080;
+//远程服务器地址
+var remote_server = "192.168.1.106";
+
 //var remote_url = "http://"+remote_server+":"+remote_port
-//
-//
-////sql server 数据库连接串
-//var conn_str = "Driver={SQL Server Native Client 10.0};Server={192.168.1.105};Database={KeerHis};uid=sa;PWD=sa;";
 
-//var interfaces = os.networkInterfaces();
-//
-//for(var key  in interfaces){
-//    var inter = interfaces[key];
-//    for(var i =0; i<inter.length;i++){
-//        if(inter[i].family =='IPv4' && inter[i].internal==false){
-//            local_addr=inter[i].address;
-//
-//        }
-//    }
-//}
 
+//sql server 数据库连接串
+var conn_str = "Driver={SQL Server Native Client 10.0};Server={192.168.1.105};Database={KeerHis};uid=sa;PWD=sa;";
+
+
+
+var interfaces = os.networkInterfaces();
+
+for(var key  in interfaces){
+    var inter = interfaces[key];
+    for(var i =0; i<inter.length;i++){
+        if(inter[i].family =='IPv4' && inter[i].internal==false){  
+            local_addr=inter[i].address; 
+            
+        }  
+    }
+}  
+*/
 
 // ping.promise.probe(remote_server)
 //     .then(function (res) {
@@ -83,7 +91,19 @@ logger.debug('log beginning:',moment().format('LLLL'));
 app.use(bodyParser.urlencoded({extended: false})); 
 
 app.get('/',function(req,res){
-    res.send('hello word');
+	
+	var sqlStr = "select count(*) from vw_xmzl";
+	
+	sql.queryRaw(conn_str,sqlStr,function(err,results){
+		 
+		 if(err){
+			logger.error('uploadInfo:'+sqlStr+"--->"+err);
+			res.send('数据库查询失败');
+			return ;
+		}
+		
+		  res.send(results);
+	 })
 });
 
 function uploadInfo(req,res,config,sqlStr,cb){
@@ -134,6 +154,7 @@ function uploadInfo(req,res,config,sqlStr,cb){
 		var tojson = {prm_appcode:'-1'};
 		
 		
+		
 		try{
 			tojson = JSON.parse(body);
 		}catch(e){
@@ -174,36 +195,6 @@ app.use('/getMzJzInfo',function(req,res){
 })
 
 
-/* SQL> desc ka02k1
-Name    Type           Nullable Default Comments 
-------- -------------- -------- ------- -------- 
-AKB020  VARCHAR2(20)                    医疗机构编码 
-AKA060  VARCHAR2(20)                    药品编码 
-AKA061  VARCHAR2(200)                   中文名称 
-AKA062  VARCHAR2(30)   Y                英文名称 
-AKA063  VARCHAR2(4)                     收费类别 
-AKA064  VARCHAR2(3)                     处方药标志 
-AKA065  VARCHAR2(3)                     收费项目等级 
-AKA066  VARCHAR2(50)   Y        NULL    助记码   
-AKA067  VARCHAR2(20)   Y                计量单位 
-AKA073  VARCHAR2(20)   Y                规格     
-AKA074  VARCHAR2(100)  Y                产地     
-AKA075  VARCHAR2(100)  Y                批准文件号 
-AKA068  NUMBER(14,2)   Y                标准价格 
-UKA008  NUMBER(14,2)   Y                计算单价 
-AKA069  NUMBER(8,4)                     自付比例 
-AKA070  NUMBER(5,2)    Y                每次用量 
-AKA071  NUMBER(3)      Y                每日次数 
-AKA072  VARCHAR2(50)   Y                用法     
-UKA010  VARCHAR2(1)    Y                可用标志 
-UKA011  VARCHAR2(1)    Y                中心监控标志 
-UKA012  VARCHAR2(1)    Y                审核标志 
-UKA013  VARCHAR2(1)    Y                取消标志 
-UKA014  VARCHAR2(200)  Y                取消原因 
-AAE013  VARCHAR2(1000) Y        NULL    备注     
-AAE011  VARCHAR2(64)   Y                经办人   
-AAE036  DATE           Y                经办时间 
-PRSENO  NUMBER(12)     Y                          */
 
 var drugMap ={
 	xmbm:'aka060b',
@@ -221,8 +212,7 @@ var drugMap ={
 app.use('/getDrugList',function(req,res){
 	var config  = tools.get_config(req.query);
 	var sqlStr = "select * from vw_xmzl where dlbm in('3','4')" ;
-	config.url+= '/sys/client/uploadDrug';
-	var akb020 = req.query.client.currentAkb020;
+	
 	config.url+= '?kb01.akb020='+req.query.client.currentAkb020+"&uid="+req.query.client.currentUid;
     uploadInfo(req,res,config,sqlStr,function(data){
 		var ret ={};
@@ -234,12 +224,32 @@ app.use('/getDrugList',function(req,res){
 })
 
 
+
+var diagsisMap ={
+	xmbm:'aka090b',
+	dlbm:'aka063',
+	xmmc:'aka091',
+	zjm: 'aka066',
+	xmgg:'',
+	xmcd:'',
+	pzwh:'',
+	dwmc:'',
+	jg:  'uka008'
+}
+
+
 app.use('/getDiagsisList',function(req,res){
 	var config  = tools.get_config(req.query);
 	var sqlStr = "select * from vw_xmzl where dlbm not in('3','4')" ;
-	config.ur+= '/sys/client';
+	
+	config.url+= '/sys/client/uploadDiagsis?kb01.akb020='+req.query.client.currentAkb020+"&uid="+req.query.client.currentUid;
     uploadInfo(req,res,config,sqlStr,function(data){
-		console.log(data);
+		var ret ={};
+		for(var key in data){
+			if(diagsisMap[key]!='')
+				ret[diagsisMap[key]] = data[key];
+		}
+		return ret;
 	});
 })
 
